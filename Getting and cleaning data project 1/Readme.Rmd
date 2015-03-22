@@ -1,0 +1,96 @@
+---
+title: "Readme for course project Getting and Cleaning Data"
+output: html_document
+---
+
+Firstly, we include necessary libraries and load data into R
+
+```{r}
+library(plyr)
+library(dplyr)
+library(reshape2)
+
+activity_labels<-read.table("./activity_labels.txt")
+features<-read.table("./features.txt")
+```
+
+Train Sample Data
+
+```{r}
+x_train<-read.table("./train/X_train.txt")
+y_train<-read.table("./train/y_train.txt")
+subject_train<-read.table("./train/subject_train.txt")
+```
+
+Test Sample Data
+
+```{r}
+x_test<-read.table("./test/X_test.txt")
+y_test<-read.table("./test/y_test.txt")
+subject_test<-read.table("./test/subject_test.txt")
+```
+
+The next step is to find indexes for mean and std within vector of 561 measurments.
+Find features with 'mean' in the name of variable. We do not use "Mean" as these are not real means but rather angles between two quantities, some of which are means.
+
+```{r}
+mean_num<-grep("mean",features[,2])
+```
+
+Within resulted idexes I decided to exlude the ones with "meanFreq" in the name as they are not the measurements on the mean and standard deviation for each measurement (as stated in the course task) but rather variables which were derived using means of another variable.
+
+```{r}
+meanFreq_num<-grep("meanFreq",features[,2])
+mean_n<-setdiff(mean_num,meanFreq_num)
+```
+
+mean_n is the resulted vector of indexes wich represents mean for each measurement. Lets find the same vector for std and unite both vectors.
+
+```{r}
+std_num<-grep("std",features[,2])
+mean_std_index<-union(mean_n,std_num)
+```
+
+Then,unite train and test data. Pick only variables for only mean and std and assign appropriate names to the columns using features vector. By this we labeled the data set with descriptive variable names.
+
+```{r}
+x<-rbind(x_train[,mean_std_index],x_test[,mean_std_index])
+names(x)<-features[mean_std_index,2]
+    
+y<-rbind(y_train,y_test)
+subject<-rbind(subject_train,subject_test)
+    
+names(subject)<-"subject"
+names(y)<-"Activity"
+```
+
+Add columnt which correspond to observation number to save order during subsequent operations. Unite subject, activity type and observation into one data set.
+
+```{r}
+obs_num<-1:nrow(y)   
+data<-cbind(obs_num,subject,y,x)
+```
+
+Substitute activity number by activity name. As merge function rearranges the order of observations
+we have to arrange data frame into initial order. The result is dataset (data_m) wich corresponds to the end of step4 of assignment.
+
+```{r}
+data_m<-merge(data,activity_labels,by.x="Activity",by.y="V1")
+data_m <-subset(data_m, select=c(2,70,3:69))
+colnames(data_m)[2]<-"Activity"
+colnames(data_m)[1]<-"Observation_number"   
+data_m<-arrange(data_m,Observation_number)
+```
+
+The code below produces tiny dataset for step5 of assignment. The resulted dataset contains observations averaged by subject and activity.
+
+
+```{r}
+data_av<-select(data_m,-(Observation_number))
+result<-aggregate(. ~ Activity + subject, data=data_av, FUN=mean)
+```
+
+As a result variable "data_m" corresponds to dataset for 1-4 steps of the assignment and "result" corresponds to 5th step.
+
+
+
