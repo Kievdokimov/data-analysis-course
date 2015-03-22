@@ -37,14 +37,15 @@ Find features with 'mean' in the name of variable. We do not use "Mean" as these
 mean_num<-grep("mean",features[,2])
 ```
 
-Within resulted idexes I decided to exlude the ones with "meanFreq" in the name as they are not the measurements on the mean and standard deviation for each measurement (as stated in the course task) but rather variables which were derived using means of another variable.
+Within resulted idexes I decided to exlude the ones with "meanFreq" in the name as they are not the measurements on the mean for each measurement (as stated in the course task) but rather variables which were derived using means of another variable.
 
 ```{r}
 meanFreq_num<-grep("meanFreq",features[,2])
 mean_n<-setdiff(mean_num,meanFreq_num)
 ```
 
-mean_n is the resulted vector of indexes wich represents mean for each measurement. Lets find the same vector for std and unite both vectors.
+mean_n is the resulted vector of indexes wich represents mean for each measurement. 
+Lets find the same vector for std and unite both vectors.
 
 ```{r}
 std_num<-grep("std",features[,2])
@@ -71,7 +72,7 @@ obs_num<-1:nrow(y)
 data<-cbind(obs_num,subject,y,x)
 ```
 
-Substitute activity number by activity name. As merge function rearranges the order of observations
+Substitute activity number by activity name. As merge function rearranged the order of observations
 we have to arrange data frame into initial order. The result is dataset (data_m) wich corresponds to the end of step4 of assignment.
 
 ```{r}
