@@ -1,0 +1,61 @@
+---
+title: "Machine learning project"
+author: "K.Ievdokimov"
+date: "Monday, May 25, 2015"
+output: html_document
+---
+
+### Data cleaning and subset selection
+I noticed that test data contains variables which corresponds to x,y and z component of gyros, accel and magnet plus  roll, pitch, yaw and total acceleration, i.e. it does not contain any of the window data cases.  For the purpose of this project, there is no value in analysing the window data. So I used for prediction only these types of data. I cleaned initial data set to exclude all columns with NA value or empty values (arbitrary chosen 1000 as a threshold).
+
+```{r,cache=TRUE}
+
+if(!file.exists("train.csv")){
+
+fileUrl<-"https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+download.file(fileUrl, destfile="./train.csv")
+}
+data_tr<-read.csv("train.csv")
+
+if(!file.exists("test.csv")){
+fileUrl<-"https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+download.file(fileUrl, destfile="./test.csv")
+}
+data_t<-read.csv("test.csv")
+
+data_tr$classe <- as.factor(data_tr$classe)
+data_short <- data_tr[,(colSums(is.na(data_tr)) < 1000)&(colSums(data_tr=="")<1000)]
+#data_t_short<-data_t[,(colSums(is.na(data_t)) < 1000)&(colSums(data_t=="")<1000)]
+
+```
+
+### Model selection
+I decided to apply random forest model as it was also chosen by researches and it usually provides good results for such type of problems. I used randomForest package as it much faster than regular caret package (for discussion of this please refer to the class [forum] (https://class.coursera.org/predmachlearn-014/forum/thread?thread_id=129)
+
+```{r, cache=TRUE}
+library(caret)
+library(randomForest)
+set.seed(2233)
+
+folds<-createResample(y=data_short$classe,times=10,list=F)
+accuracy<-rep(0,10)
+
+for(i in 1:10){
+partition <- createDataPartition(y=folds[,i], p=0.7, list=FALSE)
+train <- data_short[partition,8:60]
+test <- data_short[-partition,8:60]
+
+model1 <- randomForest(classe~., data=train)
+prediction<-predict(model1,newdata=test)
+accuracy[i]<-sum(prediction==test$classe)/nrow(test)
+
+}
+```
+To evaluate my out of sample error I used 10 times resampling method. My estimation of out of sample error is `r mean(accuracy)` . Basically I the model guessed all 20 test samples.
+Plot of out-of-sample error during cross-validation: 
+
+```{r, echo=TRUE}
+
+plot(accuracy)
+
+```
